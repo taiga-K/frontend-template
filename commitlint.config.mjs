@@ -35,8 +35,8 @@ export default {
         'body-japanese': (parsed, when = 'always') => {
           const b = (parsed.body || '').trim();
           const hasJa = /[\u3040-\u309F\u30A0-\u30FF\uFF66-\uFF9F\u4E00-\u9FFF]/.test(b);
-          const ok = b.length > 0 && hasJa;
-          return [when === 'never' ? !ok : ok, 'bodyは空にせず日本語で記述してください'];
+          const ok = hasJa;
+          return [when === 'never' ? !ok : ok, 'bodyは日本語で記述してください'];
         },
         'subject-full-stop-japanese': (parsed, when = 'always') => {
           const s = parsed.subject || '';

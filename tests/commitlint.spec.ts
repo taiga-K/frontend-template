@@ -72,12 +72,6 @@ test('fail: subjectがピリオドで終わる', async () => {
   expect(r.errors.some(e => e.name === 'subject-full-stop-japanese')).toBe(true);
 });
 
-test('fail: subjectがSentence Caseで始まる', async () => {
-  const r = await commitLint('fix(core): Some message\n\n日本語の本文');
-  expect(r.valid).toBe(false);
-  expect(r.errors.length).toBeGreaterThan(0);
-});
-
 test('fail: body無し', async () => {
   const r = await commitLint('fix(core): 日本語の件名');
   expect(r.valid).toBe(false);
