@@ -8,7 +8,7 @@ export default {
     'type-case': [2, 'always', 'lower-case'],
     'scope-empty': [2, 'never'],
     'subject-empty': [2, 'never'],
-    'subject-case': [2, 'never', ['sentence-case','start-case','pascal-case','upper-case']],
+    'subject-case': [0], // 日本語主体のため無効化
     'subject-full-stop': [2, 'never', '.'],
     'subject-full-stop-japanese': [2, 'never'],
     'header-max-length': [2, 'always', 100],
