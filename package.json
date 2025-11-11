@@ -1,0 +1,25 @@
+{
+  "name": "frontend-template",
+  "version": "1.0.0",
+  "description": "Webアプリのフロントエンドのテンプレートリポジトリ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky",
+    "commit": "commit",
+    "commitlint": "commitlint --edit",
+    "test:commitlint": "vitest run tests/commitlint.spec.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "@commitlint/lint": "^20.0.0",
+    "@commitlint/prompt-cli": "^20.1.0",
+    "conventional-changelog-conventionalcommits": "^9.1.0",
+    "husky": "^9.1.7",
+    "vitest": "^4.0.8"
+  }
+}
