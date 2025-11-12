@@ -31,26 +31,41 @@
     - bodyは必須（日本語）。ヘッダー行との間に空行を入れる
     - bodyは1行100文字以内になるように適宜改行する
     - footerがある場合は、bodyとの間に空行を入れ、各行100文字以内に収める
-    - commit実行のコマンド：
+    - commit実行のコマンド（zsh のヒアドキュメント / -F で一本化）：
       ```bash
-      # 1. 変更をステージングに追加
-      git add <ファイルパスまたはディレクトリパス>
+      # zsh: ヒアドキュメントで全文を一括指定（改行・空行を完全制御）
+      git commit -F =(cat <<'MSG'
+      type(scope): subject
       
-      # 2. commitを実行（メッセージを直接指定）
-      git commit -m "<type>(<scope>): <subject>" -m "<body>"
+      本文1行目（100字以内で改行）
+      本文2行目
+      本文3行目
       
-      # または、エディタでメッセージを編集する場合
-      git commit
+      refs: #123
+      MSG
+      )
       ```
     - 複数の変更を分割してcommitする場合：
       ```bash
       # 1つ目の変更をステージング
       git add <ファイル1>
-      git commit -m "<type>(<scope1>): <subject1>" -m "<body1>"
+      git commit -F =(cat <<'MSG'
+      type(scope1): subject1
+      
+      body1-1行目（100字以内で改行）
+      body1-2行目
+      MSG
+      )
       
       # 2つ目の変更をステージング
       git add <ファイル2>
-      git commit -m "<type>(<scope2>): <subject2>" -m "<body2>"
+      git commit -F =(cat <<'MSG'
+      type(scope2): subject2
+      
+      body2-1行目（100字以内で改行）
+      body2-2行目
+      MSG
+      )
       ```
 
 ## 注意
