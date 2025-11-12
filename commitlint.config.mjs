@@ -15,7 +15,7 @@ export default {
     'header-trim': [2, 'always'],
     'body-leading-blank': [1, 'always'], // 空行は警告
     'body-empty': [2, 'never'],
-    'body-max-line-length': [2, 'always', 200],
+    'body-max-line-length': [2, 'always', 100],
     'footer-leading-blank': [1, 'always'],
     'footer-max-line-length': [2, 'always', 100],
 
