@@ -110,24 +110,30 @@ MSG
 ```
 
 ## 自分のプロジェクトに適用する手順
-1) 依存関係のインストール（Node 18+ 推奨）
+1) commitlint をインストール（Node 18+ 推奨）
 ```bash
-npm i -D @commitlint/cli @commitlint/config-conventional husky
+npm install --save-dev @commitlint/cli @commitlint/config-conventional
 # 任意: 対話プロンプトを使う場合
-npm i -D @commitlint/prompt-cli
+npm install --save-dev @commitlint/prompt-cli
 ```
 
-2) Husky を有効化（prepare スクリプト追加 → 初期化）
+2) Husky をインストール
 ```bash
-npm pkg set scripts.prepare="husky"
-npm run prepare
-npx husky add .husky/commit-msg 'npx --no -- commitlint --edit "$1"'
+npm install --save-dev husky
 ```
 
-3) ルートに `commitlint.config.mjs` を配置  
+3) commit-msg フックを設定
+```bash
+# Git hooks を有効化
+npx husky install
+# commitlint を commit-msg で実行するフックを追加
+npx husky add .husky/commit-msg 'npx commitlint --edit ${1}'
+```
+
+4) ルートに `commitlint.config.mjs` を配置  
 上記「実際の設定ファイル」の内容をそのまま保存すれば OK です。
 
-4) コミット時はテンプレートの書式に従う  
+5) コミット時はテンプレートの書式に従う  
 - ヘッダーは `type(scope): subject`（100 文字以内、末尾に句読点なし）  
 - 本文は日本語必須、各行 100 文字以内で改行。直前に空行 1 行  
 - フッターがあれば各行 100 文字以内。直前に空行 1 行  
@@ -139,5 +145,3 @@ npx husky add .husky/commit-msg 'npx --no -- commitlint --edit "$1"'
   - 権限や Node のグローバル環境の問題がある場合は、シェルや実行権限を見直してください
 - ESM の設定について  
   - このテンプレートは `commitlint.config.mjs`（ESM）を想定しています。commitlint v17+ を使用してください
-
-
