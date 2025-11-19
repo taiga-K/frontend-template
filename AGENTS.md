@@ -150,4 +150,331 @@ components/UI/Button/
 #### 依存関係のチェック
 設計したディレクトリ構成のルールが守られるよう、ESLintを導入します
 
+### UIインフラ層の設計
+UIインフラ層（`src/ui/`）は、コンポーネント層が利用する共通基盤として、デザイントークン、ユーティリティ関数、スタイリングソリューションを提供します。この層を適切に設計することで、一貫性のあるUI実装と効率的な開発が可能になります。
+
+#### スタイリングソリューションの選定
+##### Tailwind CSSの採用
+本テンプレートでは、スタイリングソリューションとして **Tailwind CSS** を採用します。
+
+**採用理由:**
+1. **学習コストの低さ**: ユーティリティファーストのアプローチにより、CSS in JSやCSS Modulesと比較して学習コストが低い
+2. **パフォーマンス**: ビルド時に未使用のスタイルを削除（PurgeCSS）することで、本番環境でのCSSファイルサイズを最小化
+3. **汎用性**: フレームワークに依存しないため、React以外のプロジェクトにも展開可能
+4. **開発効率**: クラス名を組み合わせるだけで迅速にスタイリングが可能
+5. **一貫性**: デザイントークンベースのシステムにより、一貫したデザインを維持しやすい
+
+**他のソリューションとの比較:**
+
+| ソリューション | メリット | デメリット | 検討すべき場合 |
+|------------|---------|-----------|--------------|
+| Tailwind CSS | 学習コスト低、パフォーマンス高、汎用性高 | HTML が冗長になりがち | 汎用的なテンプレートとして最適 |
+| Emotion/styled-components | 動的スタイリングが容易、TypeScript との親和性高 | ランタイムコスト、学習コスト高 | 高度な動的スタイリングが必要な場合 |
+| CSS Modules | スコープの隔離が容易 | グローバルなデザインシステム構築が困難 | レガシーコードベースとの統合時 |
+
+#### 命名に関する重要な注意
+##### `src/components/UI/` と `src/ui/` の区別
+本テンプレートでは、以下の2つの似た名前のディレクトリが存在します：
+
+- **`src/components/UI/`**: 純粋なUIコンポーネント（Button, Imageなど）
+- **`src/ui/`**: UIインフラ層（デザイントークン、ユーティリティなど）
+
+**混同を避けるための判断基準:**
+```text
+ファイルを配置する際の質問:
+├─ これはReactコンポーネント（.tsxファイル）か？
+│  └─ YES → src/components/UI/
+│
+└─ これはデザイントークン、定数、ユーティリティか？
+   └─ YES → src/ui/
+```
+
+**具体例:**
+```tsx
+// ❌ 間違い: UIコンポーネントをsrc/ui/に配置
+// src/ui/Button.tsx
+export const Button = ({ children }: Props) => <button>{children}</button>
+
+// ✅ 正解: UIコンポーネントはsrc/components/UI/に配置
+// src/components/UI/Button/Button.tsx
+export const Button = ({ children }: Props) => <button>{children}</button>
+
+// ✅ 正解: デザイントークンはsrc/ui/に配置
+// src/ui/themes/colors.ts
+export const colors = {
+  primary: '#3B82F6',
+  secondary: '#10B981',
+} as const;
+```
+
+**将来的な命名変更の検討:**
+混同リスクをさらに低減するため、以下の命名変更も検討に値します：
+- `src/ui/` → `src/design-system/` または `src/theme/`
+- `src/components/UI/` → `src/components/Primitives/` または `src/components/Base/`
+
+ただし、この変更には既存のドキュメントとの整合性コストが伴うため、プロジェクト開始前に決定することを推奨します。
+
+#### ディレクトリ構成
+```text
+src/ui/
+├── themes/           # デザイントークン（色、サイズ、タイポグラフィ等）
+│   ├── colors.ts     # カラーパレット定義
+│   ├── spacing.ts    # スペーシングシステム
+│   ├── typography.ts # タイポグラフィ設定
+│   └── index.ts      # テーマの統合エクスポート
+├── utils/            # UIユーティリティ関数
+│   ├── cn.ts         # クラス名結合ユーティリティ
+│   └── responsive.ts # レスポンシブヘルパー
+└── constants/        # UI共通定数
+    ├── breakpoints.ts # レスポンシブブレークポイント
+    └── zIndex.ts     # z-index管理
+```
+
+#### デザイントークンの管理方針
+##### TypeScriptによる型安全なデザイントークン
+デザイントークンは、TypeScriptの`as const`を使用して定義し、型安全性を確保します。
+
+**実装例:**
+```typescript
+// src/ui/themes/colors.ts
+export const colors = {
+  // Primary colors
+  primary: {
+    50: '#EFF6FF',
+    100: '#DBEAFE',
+    500: '#3B82F6',
+    900: '#1E3A8A',
+  },
+  // Semantic colors
+  success: '#10B981',
+  error: '#EF4444',
+  warning: '#F59E0B',
+} as const;
+
+// 型推論により、存在しない色を参照するとコンパイルエラーになる
+type ColorKeys = keyof typeof colors; // 'primary' | 'success' | 'error' | 'warning'
+type PrimaryShades = keyof typeof colors.primary; // '50' | '100' | '500' | '900'
+```
+
+```typescript
+// src/ui/themes/spacing.ts
+export const spacing = {
+  xs: '0.25rem',  // 4px
+  sm: '0.5rem',   // 8px
+  md: '1rem',     // 16px
+  lg: '1.5rem',   // 24px
+  xl: '2rem',     // 32px
+} as const;
+
+export type Spacing = keyof typeof spacing;
+```
+
+##### Tailwind CSS設定との統合（Single Source of Truth）
+デザイントークンを **TypeScript で定義** し、それをTailwind CSS設定にインポートすることで、単一の信頼できる情報源（Single Source of Truth）を確立します。
+
+**推奨アプローチ:**
+```javascript
+// tailwind.config.js
+import { colors } from './src/ui/themes/colors';
+import { spacing } from './src/ui/themes/spacing';
+
+export default {
+  theme: {
+    extend: {
+      colors: colors,
+      spacing: spacing,
+    },
+  },
+};
+```
+
+**このアプローチのメリット:**
+1. **型安全性**: TypeScript のコンパイル時にトークンの存在を検証可能
+2. **一元管理**: デザイントークンの変更が TypeScript と Tailwind CSS の両方に自動反映
+3. **IntelliSense**: エディタの補完機能により、存在しないトークンを参照するリスクを低減
+
+**逆方向（Tailwind → TypeScript）は推奨しない理由:**
+```typescript
+// ❌ 非推奨: Tailwind設定から型を生成
+// - ビルドプロセスが複雑化
+// - 型生成のタイミング問題（開発中にすぐ反映されない）
+// - TypeScriptファーストの開発体験を損なう
+```
+
+#### コンポーネント層との連携
+##### Tailwind CSSクラスの使用
+コンポーネントでは、Tailwind CSSのユーティリティクラスを直接使用します。
+
+```tsx
+// src/components/UI/Button/Button.tsx
+export const Button = ({ variant = 'primary', children }: Props) => {
+  // クラス名の動的な結合にはcnユーティリティを使用
+  const className = cn(
+    'px-4 py-2 rounded font-medium transition-colors',
+    {
+      'bg-blue-500 text-white hover:bg-blue-600': variant === 'primary',
+      'bg-gray-200 text-gray-800 hover:bg-gray-300': variant === 'secondary',
+    }
+  );
+  
+  return <button className={className}>{children}</button>;
+};
+```
+
+##### デザイントークンの活用
+TypeScriptで定義したデザイントークンは、動的スタイリングが必要な場合に使用します。
+
+```tsx
+// src/components/UI/Card/Card.tsx
+import { colors } from '@/ui/themes/colors';
+import { spacing } from '@/ui/themes/spacing';
+
+export const Card = ({ accentColor, children }: Props) => {
+  return (
+    <div 
+      className="rounded-lg shadow-md p-4"
+      style={{
+        // 動的な色指定が必要な場合
+        borderLeft: `4px solid ${colors.primary[500]}`,
+        padding: spacing.md,
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+```
+
+**使い分けの原則:**
+- **静的なスタイル**: Tailwind CSSのクラス名を使用（推奨）
+- **動的なスタイル**: TypeScriptのデザイントークンをインラインスタイルで使用
+
+##### クラス名結合ユーティリティ
+複数のクラス名を条件付きで結合する場合、`cn`ユーティリティを使用します。
+
+```typescript
+// src/ui/utils/cn.ts
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+/**
+ * Tailwind CSSのクラス名を結合し、競合を解決するユーティリティ
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+```
+
+```tsx
+// 使用例
+import { cn } from '@/ui/utils/cn';
+
+const buttonClass = cn(
+  'px-4 py-2 rounded',
+  isActive && 'bg-blue-500',
+  isDisabled && 'opacity-50 cursor-not-allowed'
+);
+```
+
+#### UIに関連するフックの配置について
+UI レンダリングに直接関わるフック（`useMediaQuery`, `useTheme`等）の配置について、以下の判断基準を設けます。
+
+**配置の判断基準:**
+
+| フックの種類 | 配置場所 | 判断基準 | 例 |
+|-----------|---------|---------|-----|
+| UIレンダリング直結 | `src/ui/hooks/` | DOMやレスポンシブ、テーマに関連する汎用的なフック | `useMediaQuery`, `useTheme`, `useBreakpoint` |
+| ビジネスロジック | `src/components/Functional/hooks/` | ドメイン固有のデータ取得やビジネスルール | `useProductData`, `useAuth` |
+
+**実装例:**
+```typescript
+// src/ui/hooks/useMediaQuery.ts
+export function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    setMatches(media.matches);
+    
+    const listener = () => setMatches(media.matches);
+    media.addEventListener('change', listener);
+    return () => media.removeEventListener('change', listener);
+  }, [query]);
+
+  return matches;
+}
+
+// src/components/UI/ResponsiveImage/ResponsiveImage.tsx
+import { useMediaQuery } from '@/ui/hooks/useMediaQuery';
+
+export const ResponsiveImage = ({ src, srcMobile }: Props) => {
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  return <img src={isMobile ? srcMobile : src} />;
+};
+```
+
+**重要な注意点:**
+`src/components/Functional/` との重複を避けるため、**UIレンダリングに直接関係しない汎用的なフック** は明確に区別する必要があります。判断が難しい場合は、以下の質問で確認します：
+
+> **Q: このフックはビジネスロジックを含むか？**
+> - **YES** → `src/components/Functional/hooks/`
+> - **NO** → `src/ui/hooks/`
+
+#### 依存関係のルール
+UIインフラ層は、アーキテクチャの最下位層として位置づけられます。
+
+```mermaid
+flowchart TD
+    Pages["Pages<br/>(src/components/Pages)"]
+    Models["Models<br/>(src/components/Models)"]
+    Layouts["Layouts<br/>(src/components/Layouts)"]
+    UI["UI<br/>(src/components/UI)"]
+    Functional["Functional<br/>(src/components/Functional)"]
+    UIInfra["UIインフラ層<br/>(src/ui)"]
+    External["外部ライブラリ<br/>(Tailwind CSS, React等)"]
+
+    Pages --> Models
+    Pages --> Layouts
+    Pages --> UI
+    Pages --> Functional
+    
+    Models --> UI
+    Models --> Functional
+    
+    Layouts --> UI
+    Layouts --> Functional
+    
+    UI --> Functional
+    
+    %% UIインフラ層への依存
+    Pages -.->|利用| UIInfra
+    Models -.->|利用| UIInfra
+    Layouts -.->|利用| UIInfra
+    UI -.->|利用| UIInfra
+    Functional -.->|利用| UIInfra
+    
+    UIInfra --> External
+
+    style UIInfra fill:#e1f5ff
+    style External fill:#f0f0f0
+```
+
+**依存関係のルール:**
+1. **すべてのコンポーネント層** は UIインフラ層（`src/ui/`）を参照可能
+2. **UIインフラ層** は外部ライブラリ（Tailwind CSS、Reactなど）のみに依存
+3. **UIインフラ層** は `src/components/` 内のどのディレクトリも参照してはならない
+
+**具体的な依存関係:**
+
+| 層 | 依存可能な層 |
+|----|-----------|
+| Pages | Models, Layouts, UI, Functional, **UIインフラ層** |
+| Models | UI, Functional, **UIインフラ層** |
+| Layouts | UI, Functional, **UIインフラ層** |
+| UI | Functional, **UIインフラ層** |
+| Functional | **UIインフラ層** |
+| **UIインフラ層** | 外部ライブラリのみ |
+
+この依存関係により、UIインフラ層の変更はすべてのコンポーネント層に影響を与える可能性がありますが、コンポーネント層の変更はUIインフラ層に影響を与えません。これにより、デザインシステムの一貫性を保ちながら、柔軟なコンポーネント開発が可能になります。
+
 
