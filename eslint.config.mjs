@@ -26,19 +26,18 @@ export default [
     },
     rules: {
       // Component organization rules based on AGENTS.md
+      // Dependency rules (see AGENTS.md lines 436-439, 471):
+      // - Pages: can import Models, Layouts, UI, Functional, ui/
+      // - Layouts: can import UI, Functional, other Layouts, ui/ (NOT Pages, NOT Models)
+      // - Models: can import UI, Functional, other Models, ui/ (NOT Pages, NOT Layouts)
+      // - UI: can import Functional, other UI, ui/ (NOT Pages, NOT Layouts, NOT Models)
+      // - Functional: can import other Functional, ui/ only (lowest layer)
+      // - ui/: cannot import from any component layer
       
-      // Rule 1: Pages cannot import from Layouts
       'import/no-restricted-paths': [
         'error',
         {
           zones: [
-            // Pages: can import Models, UI, Functional, ui/ (NOT Layouts)
-            {
-              target: './src/components/Pages',
-              from: './src/components/Layouts',
-              message: 'Pages components cannot import from Layouts. Pages can only import from Models, UI, Functional, and src/ui/.',
-            },
-            
             // Layouts: can import UI, Functional, ui/, and other Layouts (NOT Pages, NOT Models)
             {
               target: './src/components/Layouts',
