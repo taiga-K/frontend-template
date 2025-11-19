@@ -7,7 +7,9 @@
     "prepare": "husky",
     "commit": "commit",
     "commitlint": "commitlint --edit",
-    "test:commitlint": "vitest run tests/commitlint.spec.ts"
+    "test:commitlint": "vitest run tests/commitlint.spec.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "keywords": [],
   "author": "",
@@ -17,7 +19,12 @@
     "@commitlint/config-conventional": "^20.0.0",
     "@commitlint/lint": "^20.0.0",
     "@commitlint/prompt-cli": "^20.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.47.0",
+    "@typescript-eslint/parser": "^8.47.0",
     "conventional-changelog-conventionalcommits": "^9.1.0",
+    "eslint": "^9.39.1",
+    "eslint-import-resolver-typescript": "^4.4.4",
+    "eslint-plugin-import": "^2.32.0",
     "husky": "^9.1.7",
     "vitest": "^4.0.8"
   }
