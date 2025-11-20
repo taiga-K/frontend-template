@@ -9,7 +9,7 @@
 
 この構造を実現するため、以下の２層構造を採用します。
 1. コンポーネント層（src/components/）:役割別に5つのディレクトリに分類
-2. UIインフラ層(src/ui/):コンポーネントが利用する共通基盤
+2. UIインフラ層(src/design-system/):コンポーネントが利用する共通基盤
 
 コンポーネント層とUIインフラ層の関係は以下の通りです
 
@@ -18,11 +18,11 @@ flowchart TD
 
 subgraph C[src/components/]
     P[Pages / Models]
-    L[Layouts / UI]
+    L[Layouts / Base]
     P -->|利用| L
 end
 
-subgraph U[src/ui/]
+subgraph U[src/design-system/]
     T[themes / styled / constans ...]
 end
 
@@ -30,16 +30,16 @@ C -->|利用| U
 
 %% 説明:
 %% Pages / Models ← ビジネスロジック
-%% Layouts / UI ← レイアウト・UIパーツ
-%% src/ui ← 共通基盤・スタイル定義
+%% Layouts / Base ← レイアウト・UIパーツ
+%% src/design-system ← 共通基盤・スタイル定義
 ```
 
 ### コンポーネント層の設計
 コンポーネントを５つの役割に分類し、それぞれの責務と依存関係を定義します
 #### ディレクトリ構成
-```
+```text
 src/components/
-├── UI/
+├── Base/
 ├── Models/
 ├── Pages/
 ├── Layouts/
@@ -51,7 +51,7 @@ src/components/
 各ディレクトリの役割は以下のように定義します
 | 名前         | 役割                | 格納するコンポーネント例               |
 | ---------- | ----------------- | -------------------------- |
-| UI         | 純粋なUI要素           | Button, Collapse, Image... |
+| Base       | 純粋なUI要素           | Button, Collapse, Image... |
 | Models     | ドメインロジックがある       | ProductList, BrandList...  |
 | Pages      | ページ専用             | HomePage, SearchPage...    |
 | Layouts    | アプリに関わるレイアウト      | Header, Footer...          |
@@ -76,11 +76,11 @@ src/components/
 * **例：** `ProductList`, `BrandList`
 
 4. UIのみの汎用的なコンポーネントか？
-* **YES →** `src/components/UI/` に配置
+* **YES →** `src/components/Base/` に配置
 * **判断基準：** ビジネスロジックを含まない純粋なUI要素
 * **例：** `Button`, `Collapse`, `Image`
 > **重要：**
-> ドメイン固有の名前を持つコンポーネントでも、データを表示するだけならUIに配置
+> ドメイン固有の名前を持つコンポーネントでも、データを表示するだけならBaseに配置
 > Modelsとの違いは **データ取得やビジネスルールを含むかどうか**。
 
 5. UIを伴わないアプリケーション機能か？
@@ -89,10 +89,10 @@ src/components/
 * **例：** `Analytics`, `GlobalStore`
 
 #### 実装例
-##### UIコンポーネント
+##### Baseコンポーネント
 propsで受け取ったデータを表示するだけのシンプルな実装
 ```tsx
-// UI/ProductCard - UI コンポーネント
+// Base/ProductCard - Base コンポーネント
 export const ProductCard = ({ name, price, image }: Props) => (
   <Card>
     <Image src={image} />
@@ -103,9 +103,9 @@ export const ProductCard = ({ name, price, image }: Props) => (
 ```
 
 ##### Models コンポーネント
-データを取得し、UIコンポーネントを組み合わせて表示する
+データを取得し、Baseコンポーネントを組み合わせて表示する
 ```tsx
-// Models/ProductList - ドメインロジック + UI を利用
+// Models/ProductList - ドメインロジック + Base を利用
 export const ProductList = (props) => {
   const { products } = useProductData(props);
 
@@ -118,13 +118,13 @@ export const ProductList = (props) => {
   );
 };
 ```
-ProductCard（UI）は純粋な表示、ProductList（Models）はデータ取得とUIの組み合わせという責務の違いが分かる
+ProductCard（Base）は純粋な表示、ProductList（Models）はデータ取得とBaseの組み合わせという責務の違いが分かる
 
-####テストファイルの配置
+#### テストファイルの配置
 コンポーネントの分類と同様に、テストファイルの配置もルールが必要です
 テストやStorybookのファイルは、対象のコンポーネントファイルと同じディレクトリに配置することで、関連するファイルを一箇所にまとめて管理します
-```
-components/UI/Button/
+```text
+components/Base/Button/
 ├── Button.tsx
 ├── Button.test.tsx
 ├── Button.stories.tsx
@@ -136,9 +136,9 @@ components/UI/Button/
 コンポーネント間の依存関係は「自分の横か下にある分類のコンポーネントのみ参照してよい」という原則に従います
 
 依存の基本原則：上位から下位への一方向のみ許可
-- Pages（src/components/Pages）: Models、UI、Functionalを参照可能
-- Models・Layouts: UIとFunctionalを参照可能
-- UI: Functionalのみ参照可能
+- Pages（src/components/Pages）: Models、Base、Functionalを参照可能
+- Models・Layouts: BaseとFunctionalを参照可能
+- Base: Functionalのみ参照可能
 - Functional: 外部依存なし（最下位）
 各ディレクトリは、同じディレクトリ内のコンポーネント同士も参照可能です（Pagesを除く）
 > **注記：**
@@ -151,7 +151,7 @@ components/UI/Button/
 設計したディレクトリ構成のルールが守られるよう、ESLintを導入します
 
 ### UIインフラ層の設計
-UIインフラ層（`src/ui/`）は、コンポーネント層が利用する共通基盤として、デザイントークン、ユーティリティ関数、スタイリングソリューションを提供します。この層を適切に設計することで、一貫性のあるUI実装と効率的な開発が可能になります。
+UIインフラ層（`src/design-system/`）は、コンポーネント層が利用する共通基盤として、デザイントークン、ユーティリティ関数、スタイリングソリューションを提供します。この層を適切に設計することで、一貫性のあるUI実装と効率的な開発が可能になります。
 
 #### スタイリングソリューションの選定
 ##### Tailwind CSSの採用
@@ -173,50 +173,50 @@ UIインフラ層（`src/ui/`）は、コンポーネント層が利用する共
 | CSS Modules | スコープの隔離が容易 | グローバルなデザインシステム構築が困難 | レガシーコードベースとの統合時 |
 
 #### 命名に関する重要な注意
-##### `src/components/UI/` と `src/ui/` の区別
+##### `src/components/Base/` と `src/design-system/` の区別
 本テンプレートでは、以下の2つの似た名前のディレクトリが存在します：
 
-- **`src/components/UI/`**: 純粋なUIコンポーネント（Button, Imageなど）
-- **`src/ui/`**: UIインフラ層（デザイントークン、ユーティリティなど）
+- **`src/components/Base/`**: 純粋なUIコンポーネント（Button, Imageなど）
+- **`src/design-system/`**: UIインフラ層（デザイントークン、ユーティリティなど）
 
 **混同を避けるための判断基準:**
 ```text
 ファイルを配置する際の質問:
 ├─ これはReactコンポーネント（.tsxファイル）か？
-│  └─ YES → src/components/UI/
+│  └─ YES → src/components/Base/
 │
 └─ これはデザイントークン、定数、ユーティリティか？
-   └─ YES → src/ui/
+   └─ YES → src/design-system/
 ```
 
 **具体例:**
 ```tsx
-// ❌ 間違い: UIコンポーネントをsrc/ui/に配置
-// src/ui/Button.tsx
+// ❌ 間違い: UIコンポーネントをsrc/design-system/に配置
+// src/design-system/Button.tsx
 export const Button = ({ children }: Props) => <button>{children}</button>
 
-// ✅ 正解: UIコンポーネントはsrc/components/UI/に配置
-// src/components/UI/Button/Button.tsx
+// ✅ 正解: UIコンポーネントはsrc/components/Base/に配置
+// src/components/Base/Button/Button.tsx
 export const Button = ({ children }: Props) => <button>{children}</button>
 
-// ✅ 正解: デザイントークンはsrc/ui/に配置
-// src/ui/themes/colors.ts
+// ✅ 正解: デザイントークンはsrc/design-system/に配置
+// src/design-system/themes/colors.ts
 export const colors = {
   primary: '#3B82F6',
   secondary: '#10B981',
 } as const;
 ```
 
-**将来的な命名変更の検討:**
-混同リスクをさらに低減するため、以下の命名変更も検討に値します：
-- `src/ui/` → `src/design-system/` または `src/theme/`
-- `src/components/UI/` → `src/components/Primitives/` または `src/components/Base/`
+**命名の決定:**
+混同リスクを低減するため、以下の命名を採用しています：
+- `src/design-system/`: UIインフラ層（デザイントークン、ユーティリティなど）
+- `src/components/Base/`: 純粋なUIコンポーネント（Button、Imageなど）
 
-ただし、この変更には既存のドキュメントとの整合性コストが伴うため、プロジェクト開始前に決定することを推奨します。
+この命名により、役割の区別が明確になり、ファイルの配置場所で迷うことを最小化します。
 
 #### ディレクトリ構成
 ```text
-src/ui/
+src/design-system/
 ├── themes/           # デザイントークン（色、サイズ、タイポグラフィ等）
 │   ├── colors.ts     # カラーパレット定義
 │   ├── spacing.ts    # スペーシングシステム
@@ -236,7 +236,7 @@ src/ui/
 
 **実装例:**
 ```typescript
-// src/ui/themes/colors.ts
+// src/design-system/themes/colors.ts
 export const colors = {
   // Primary colors
   primary: {
@@ -257,7 +257,7 @@ type PrimaryShades = keyof typeof colors.primary; // '50' | '100' | '500' | '900
 ```
 
 ```typescript
-// src/ui/themes/spacing.ts
+// src/design-system/themes/spacing.ts
 export const spacing = {
   xs: '0.25rem',  // 4px
   sm: '0.5rem',   // 8px
@@ -275,8 +275,8 @@ export type Spacing = keyof typeof spacing;
 **推奨アプローチ:**
 ```javascript
 // tailwind.config.js
-import { colors } from './src/ui/themes/colors';
-import { spacing } from './src/ui/themes/spacing';
+import { colors } from './src/design-system/themes/colors';
+import { spacing } from './src/design-system/themes/spacing';
 
 export default {
   theme: {
@@ -306,7 +306,7 @@ export default {
 コンポーネントでは、Tailwind CSSのユーティリティクラスを直接使用します。
 
 ```tsx
-// src/components/UI/Button/Button.tsx
+// src/components/Base/Button/Button.tsx
 export const Button = ({ variant = 'primary', children }: Props) => {
   // クラス名の動的な結合にはcnユーティリティを使用
   const className = cn(
@@ -325,9 +325,9 @@ export const Button = ({ variant = 'primary', children }: Props) => {
 TypeScriptで定義したデザイントークンは、動的スタイリングが必要な場合に使用します。
 
 ```tsx
-// src/components/UI/Card/Card.tsx
-import { colors } from '@/ui/themes/colors';
-import { spacing } from '@/ui/themes/spacing';
+// src/components/Base/Card/Card.tsx
+import { colors } from '@/design-system/themes/colors';
+import { spacing } from '@/design-system/themes/spacing';
 
 export const Card = ({ accentColor, children }: Props) => {
   return (
@@ -353,7 +353,7 @@ export const Card = ({ accentColor, children }: Props) => {
 複数のクラス名を条件付きで結合する場合、`cn`ユーティリティを使用します。
 
 ```typescript
-// src/ui/utils/cn.ts
+// src/design-system/utils/cn.ts
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -367,7 +367,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ```tsx
 // 使用例
-import { cn } from '@/ui/utils/cn';
+import { cn } from '@/design-system/utils/cn';
 
 const buttonClass = cn(
   'px-4 py-2 rounded',
@@ -383,12 +383,12 @@ UI レンダリングに直接関わるフック（`useMediaQuery`, `useTheme`�
 
 | フックの種類 | 配置場所 | 判断基準 | 例 |
 |-----------|---------|---------|-----|
-| UIレンダリング直結 | `src/ui/hooks/` | DOMやレスポンシブ、テーマに関連する汎用的なフック | `useMediaQuery`, `useTheme`, `useBreakpoint` |
+| UIレンダリング直結 | `src/design-system/hooks/` | DOMやレスポンシブ、テーマに関連する汎用的なフック | `useMediaQuery`, `useTheme`, `useBreakpoint` |
 | ビジネスロジック | `src/components/Functional/hooks/` | ドメイン固有のデータ取得やビジネスルール | `useProductData`, `useAuth` |
 
 **実装例:**
 ```typescript
-// src/ui/hooks/useMediaQuery.ts
+// src/design-system/hooks/useMediaQuery.ts
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(false);
 
@@ -404,8 +404,8 @@ export function useMediaQuery(query: string): boolean {
   return matches;
 }
 
-// src/components/UI/ResponsiveImage/ResponsiveImage.tsx
-import { useMediaQuery } from '@/ui/hooks/useMediaQuery';
+// src/components/Base/ResponsiveImage/ResponsiveImage.tsx
+import { useMediaQuery } from '@/design-system/hooks/useMediaQuery';
 
 export const ResponsiveImage = ({ src, srcMobile }: Props) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -418,7 +418,7 @@ export const ResponsiveImage = ({ src, srcMobile }: Props) => {
 
 > **Q: このフックはビジネスロジックを含むか？**
 > - **YES** → `src/components/Functional/hooks/`
-> - **NO** → `src/ui/hooks/`
+> - **NO** → `src/design-system/hooks/`
 
 #### 依存関係のルール
 UIインフラ層は、アーキテクチャの最下位層として位置づけられます。
@@ -428,29 +428,29 @@ flowchart TD
     Pages["Pages<br/>(src/components/Pages)"]
     Models["Models<br/>(src/components/Models)"]
     Layouts["Layouts<br/>(src/components/Layouts)"]
-    UI["UI<br/>(src/components/UI)"]
+    Base["Base<br/>(src/components/Base)"]
     Functional["Functional<br/>(src/components/Functional)"]
-    UIInfra["UIインフラ層<br/>(src/ui)"]
+    UIInfra["UIインフラ層<br/>(src/design-system)"]
     External["外部ライブラリ<br/>(Tailwind CSS, React等)"]
 
     Pages --> Models
     Pages --> Layouts
-    Pages --> UI
+    Pages --> Base
     Pages --> Functional
     
-    Models --> UI
+    Models --> Base
     Models --> Functional
     
-    Layouts --> UI
+    Layouts --> Base
     Layouts --> Functional
     
-    UI --> Functional
+    Base --> Functional
     
     %% UIインフラ層への依存
     Pages -.->|利用| UIInfra
     Models -.->|利用| UIInfra
     Layouts -.->|利用| UIInfra
-    UI -.->|利用| UIInfra
+    Base -.->|利用| UIInfra
     Functional -.->|利用| UIInfra
     
     UIInfra --> External
@@ -460,7 +460,7 @@ flowchart TD
 ```
 
 **依存関係のルール:**
-1. **すべてのコンポーネント層** は UIインフラ層（`src/ui/`）を参照可能
+1. **すべてのコンポーネント層** は UIインフラ層（`src/design-system/`）を参照可能
 2. **UIインフラ層** は外部ライブラリ（Tailwind CSS、Reactなど）のみに依存
 3. **UIインフラ層** は `src/components/` 内のどのディレクトリも参照してはならない
 
@@ -468,10 +468,10 @@ flowchart TD
 
 | 層 | 依存可能な層 |
 |----|-----------|
-| Pages | Models, Layouts, UI, Functional, **UIインフラ層** |
-| Models | UI, Functional, **UIインフラ層** |
-| Layouts | UI, Functional, **UIインフラ層** |
-| UI | Functional, **UIインフラ層** |
+| Pages | Models, Layouts, Base, Functional, **UIインフラ層** |
+| Models | Base, Functional, **UIインフラ層** |
+| Layouts | Base, Functional, **UIインフラ層** |
+| Base | Functional, **UIインフラ層** |
 | Functional | **UIインフラ層** |
 | **UIインフラ層** | 外部ライブラリのみ |
 
