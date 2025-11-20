@@ -37,7 +37,7 @@ C -->|利用| U
 ### コンポーネント層の設計
 コンポーネントを５つの役割に分類し、それぞれの責務と依存関係を定義します
 #### ディレクトリ構成
-```
+```text
 src/components/
 ├── Base/
 ├── Models/
@@ -120,10 +120,10 @@ export const ProductList = (props) => {
 ```
 ProductCard（Base）は純粋な表示、ProductList（Models）はデータ取得とBaseの組み合わせという責務の違いが分かる
 
-####テストファイルの配置
+#### テストファイルの配置
 コンポーネントの分類と同様に、テストファイルの配置もルールが必要です
 テストやStorybookのファイルは、対象のコンポーネントファイルと同じディレクトリに配置することで、関連するファイルを一箇所にまとめて管理します
-```
+```text
 components/Base/Button/
 ├── Button.tsx
 ├── Button.test.tsx
@@ -326,8 +326,8 @@ TypeScriptで定義したデザイントークンは、動的スタイリング�
 
 ```tsx
 // src/components/Base/Card/Card.tsx
-import { colors } from '@/ui/themes/colors';
-import { spacing } from '@/ui/themes/spacing';
+import { colors } from '@/design-system/themes/colors';
+import { spacing } from '@/design-system/themes/spacing';
 
 export const Card = ({ accentColor, children }: Props) => {
   return (
@@ -367,7 +367,7 @@ export function cn(...inputs: ClassValue[]) {
 
 ```tsx
 // 使用例
-import { cn } from '@/ui/utils/cn';
+import { cn } from '@/design-system/utils/cn';
 
 const buttonClass = cn(
   'px-4 py-2 rounded',
@@ -405,7 +405,7 @@ export function useMediaQuery(query: string): boolean {
 }
 
 // src/components/Base/ResponsiveImage/ResponsiveImage.tsx
-import { useMediaQuery } from '@/ui/hooks/useMediaQuery';
+import { useMediaQuery } from '@/design-system/hooks/useMediaQuery';
 
 export const ResponsiveImage = ({ src, srcMobile }: Props) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
